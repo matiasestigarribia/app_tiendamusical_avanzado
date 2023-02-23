@@ -7,6 +7,7 @@ from tkinter import Label
 from tkinter import messagebox
 from peewee import *
 import datetime
+from observador import Sujeto
 
 
 def funcion_decoradora(funcion_parametro):
@@ -54,7 +55,7 @@ db.connect()
 db.create_tables([Discografica])
 
 
-class Abmc:
+class Abmc(Sujeto):
     def __init__(
         self,
     ):
@@ -89,7 +90,7 @@ class Abmc:
             )
 
             # notificacion
-            # self.notificar(artista,album,unidades, valor)
+            self.notificar(artista, album, unidades, valor)
 
         else:
             print("Error en campo Artista")
@@ -118,6 +119,8 @@ class Abmc:
         valores = tree.selection()
         print(valores)
         item = tree.item(valores)
+        ##### observador notificar
+        self.notificar(item)
         print(item)
         mi_id = item["text"]
         item_seleccionado = tree.focus()
@@ -146,3 +149,5 @@ class Abmc:
         print("Item modificado")
         messagebox.showinfo(title="Enhorabuena!", message="Item modificado con éxito")
         self.actualizar_treeview(tree)
+        #### observador notificar
+        self.notificar(artista, album, unidades, valor)

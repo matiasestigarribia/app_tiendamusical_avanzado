@@ -1,5 +1,6 @@
 from tkinter import Tk
 import vista
+import observador
 
 ######################
 # CONTROLADOR
@@ -12,6 +13,7 @@ class Controller:
         self.root_controller = root
         # self.root = root
         self.objeto_vista = vista.Mivista(self.root_controller)
+        self.el_observador = observador.ConcreteObserverA(self.objeto_vista.obj)
 
 
 if __name__ == "__main__":
