@@ -16,8 +16,6 @@ class Controller:
 
 if __name__ == "__main__":
     root = Tk()
-    # mi_app=vista.Panel(root)
     # Paso 1 - Instancio el controlador
-    # mi_app=Controller(root)
     Controller(root)
     root.mainloop()

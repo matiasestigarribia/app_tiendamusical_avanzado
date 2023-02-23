@@ -6,51 +6,38 @@ import re
 from tkinter import Label
 from tkinter import messagebox
 from peewee import *
-
+import datetime
 
 ####################
 # MODELO
+
+# Conexion con la base de datos
+
+db = SqliteDatabase("mi_base_datos_peewee.db")
+
+
+class BaseModel(Model):
+    class Meta:
+        database = db
+
+
+class Discografica(BaseModel):
+    artista = CharField(unique=False)
+    album = CharField()
+    unidades = IntegerField()
+    valor = DecimalField()
+    # fecha_movimiento = DateTimeField(default=datetime.datetime.now)
+
+
+db.connect()
+db.create_tables([Discografica])
 
 
 class Abmc:
     def __init__(
         self,
     ):
-        try:
-            con = sqlite3.connect("mibase_intermedio.db")
-            cursor = con.cursor()
-            sql = """CREATE TABLE discografica
-                (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                artista varchar(50) NOT NULL,
-                album varchar(50) NOT NULL,
-                unidades varchar(20) NOT NULL,
-                valor varchar(20) NOT NULL
-                )"""
-            cursor.execute(sql)
-            con.commit
-            print("Bienvenido/a ingrese un item en la base de datos de música")
-        except:
-            print(
-                "Bienvenido/a, ingrese un item o consulte en la base de datos de música"
-            )
-        finally:
-            print("Puede consultar, modificar o eliminar")
-            # excepción que comunica que la base de datos se crea al dar el alta, y en caso de estar creada da otro aviso.
-            # mediante finally, en ambos casos comunica que se puede consultar, modificar o eliminar.
-
-    def conexion(
-        self,
-    ):
-        con = sqlite3.connect("mibase_intermedio.db")
-        return con
-
-    def crear_base(
-        self,
-    ):
-        con = sqlite3.connect("mibase_intermedio.db")
-        con.close()
-        self.crear_base
-        return con
+        pass
 
     def alta(self, artista, album, unidades, valor, tree):
         cadena = artista
@@ -65,17 +52,22 @@ class Abmc:
             # excepción que impide el alta si se ingresa un número negativo en el item unidades
         if re.match(patron, cadena):
             print(artista, album, unidades, valor)
-            con = self.conexion()
-            cursor = con.cursor()
-            data = (artista, album, unidades, valor)
-            sql = "INSERT INTO discografica(artista, album, unidades, valor) VALUES(?, ?, ?, ?)"
-            cursor.execute(sql, data)
-            con.commit()
+
+            discografica = Discografica()
+            discografica.artista = artista
+            discografica.album = album
+            discografica.unidades = unidades
+            discografica.valor = valor
+            discografica.save()
+            self.actualizar_treeview(tree)
             print("Item dado de alta")
             messagebox.showinfo(
-                title="Enhorabuena!", message="Item ingresado con éxito"
+                title="Enhorabuena!",
+                message="Item ingresado con éxito en la base de datos",
             )
-            self.actualizar_treeview(tree)
+
+            # notificacion
+            # self.notificar(artista,album,unidades, valor)
 
         else:
             print("Error en campo Artista")
@@ -86,40 +78,34 @@ class Abmc:
     def consulta(self, tree):
         self.actualizar_treeview(tree)
 
+    def actualizar_treeview(self, mitreview):
+        records = mitreview.get_children()
+        for element in records:
+            mitreview.delete(element)
+
+        for fila in Discografica.select():
+            mitreview.insert(
+                "",
+                0,
+                text=fila.id,
+                values=(fila.artista, fila.album, fila.unidades, fila.valor),
+            )
+
     def baja(self, tree):
         valores = tree.selection()
         print(valores)
         item = tree.item(valores)
         print(item)
-        print(item["text"])
         mi_id = item["text"]
+        item_seleccionado = tree.focus()
+        mi_id = tree.item(item_seleccionado)
+        borrar = Discografica.get(Discografica.id == mi_id["text"])
+        borrar.delete_instance()
 
-        con = self.conexion()
-        cursor = con.cursor()
-        data = (mi_id,)
-        sql = "DELETE FROM discografica WHERE id = ?"
-        cursor.execute(sql, data)
-        con.commit()
         print("Item dado de baja")
         messagebox.showinfo(title="Enhorabuena!", message="Item eliminado con éxito")
         self.actualizar_treeview(tree)
-        tree.delete(valores)
-
-    def actualizar_treeview(self, mitreview):
-        records = mitreview.get_children()
-        for element in records:
-            mitreview.delete(element)
-        sql = "SELECT * FROM discografica ORDER BY id ASC"
-        con = self.conexion()
-        cursor = con.cursor()
-        datos = cursor.execute(sql)
-
-        resultado = datos.fetchall()
-        for fila in resultado:
-            print(fila)
-            mitreview.insert(
-                "", 0, text=fila[0], values=(fila[1], fila[2], fila[3], fila[4])
-            )
+        # tree.delete(valores)
 
     def modificar(self, artista, album, unidades, valor, tree):
         valores = tree.selection()
@@ -128,12 +114,11 @@ class Abmc:
         print(item)
         print(item["text"])
         mi_id = item["text"]
-        data = (artista, album, unidades, valor, mi_id)
-        sql = "UPDATE discografica SET artista = ?, album = ?, unidades = ?, valor = ? WHERE id = ?"
-        con = self.conexion()
-        cursor = con.cursor()
-        cursor.execute(sql, data)
-        con.commit()
+        actualizar = Discografica.update(
+            artista=artista, album=album, unidades=unidades, valor=valor
+        ).where(Discografica.id == mi_id)
+        actualizar.execute()
+
         print("Item modificado")
         messagebox.showinfo(title="Enhorabuena!", message="Item modificado con éxito")
         self.actualizar_treeview(tree)
