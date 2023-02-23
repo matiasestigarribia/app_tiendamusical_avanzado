@@ -8,6 +8,28 @@ from tkinter import messagebox
 from peewee import *
 import datetime
 
+
+def funcion_decoradora(funcion_parametro):
+    def funcion_interna(*args, **kwargs):
+        print("funcion decoradora")
+        print(
+            "Se acaba de ejecutar  %s" % funcion_parametro.__name__,
+            "el dia ",
+            datetime.date.today(),
+        )
+        if funcion_parametro.__name__ == "alta":
+            print("Esto es la decoradora desde alta")
+
+        elif funcion_parametro.__name__ == "baja":
+            print("Esto es la decoradora desde de baja")
+
+        elif funcion_parametro.__name__ == "modificar":
+            print("Esto es la decoradora desde modificar")
+        return funcion_parametro(*args, **kwargs)
+
+    return funcion_interna
+
+
 ####################
 # MODELO
 
@@ -26,7 +48,6 @@ class Discografica(BaseModel):
     album = CharField()
     unidades = IntegerField()
     valor = DecimalField()
-    # fecha_movimiento = DateTimeField(default=datetime.datetime.now)
 
 
 db.connect()
@@ -39,6 +60,7 @@ class Abmc:
     ):
         pass
 
+    @funcion_decoradora
     def alta(self, artista, album, unidades, valor, tree):
         cadena = artista
         patron = "[a-zA-Záéíóú 0-9 \s]+"  # regex que valida campo de entrada artista tolerando varios espacios, entre caracteres alfanúmericos
@@ -91,6 +113,7 @@ class Abmc:
                 values=(fila.artista, fila.album, fila.unidades, fila.valor),
             )
 
+    @funcion_decoradora
     def baja(self, tree):
         valores = tree.selection()
         print(valores)
@@ -107,6 +130,7 @@ class Abmc:
         self.actualizar_treeview(tree)
         # tree.delete(valores)
 
+    @funcion_decoradora
     def modificar(self, artista, album, unidades, valor, tree):
         valores = tree.selection()
         print(valores)
